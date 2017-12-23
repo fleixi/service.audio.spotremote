@@ -9,7 +9,6 @@
   </requires>
   <extension point="xbmc.service" library="service.py" start="login" />
   <extension point="xbmc.addon.metadata">
-        <language>de_De en_GB</language>
         <platform>linux</platform>
         <source>https://github.com/fleixi/service.audio.spotremote</source>
         <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
