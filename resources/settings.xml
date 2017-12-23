@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="51010">
+        <setting label="51011" type="text" id="spotify_settings" default=""/>
+        <setting label="51012" type="bool" id="pulseaudio" default="true"/>
+    </category>
+    <category label="51020">
+        <setting label="51021" type="bool" id="debug" default="false"/>
+    </category>
+</settings> 

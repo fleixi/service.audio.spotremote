@@ -1,0 +1,15 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<strings>
+    <!-- Settings Global_Settings entries -->
+    <string id="51010">Normal Settings</string>
+    <string id="51011">Spotify commandline parameters</string>
+    <string id="51012">Sync Pulseaudio Volume</string>
+    
+    <!-- Settings Debug_Settings entries -->
+    <string id="51020">Debug settings</string>
+    <string id="51021">Enable Debuglog</string>
+    
+    <!-- Interface entries -->
+    <string id="51030">Spotify/Playback start</string>
+</strings>

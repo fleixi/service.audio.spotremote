@@ -1,0 +1,15 @@
+ <?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
+<strings>
+    <!-- Settings Global_Settings entries -->
+    <string id="51010">Allgemeine Einstellungen</string>
+    <string id="51011">Optionen beim Spotify starten</string>
+    <string id="51012">Syncronisiere Pulseaudio Lautstärke</string>
+    
+    <!-- Settings Debug_Settings entries -->
+    <string id="51020">Fehlerbehebungs Einstellungen</string>
+    <string id="51021">Aktiviere Fehlerlog</string>
+    
+    <!-- Interface entries -->
+    <string id="51030">Spotify/Wiedergabe starten</string>
+</strings>
