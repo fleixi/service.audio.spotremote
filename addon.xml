@@ -9,9 +9,9 @@
   </requires>
   <extension point="xbmc.service" library="service.py" start="login" />
   <extension point="xbmc.addon.metadata">
-        <language></language>
+        <language>de_De en_GB</language>
         <platform>linux</platform>
-        <source>https://github.com/dersphere/plugin.audio.radio_de</source>
+        <source>https://github.com/fleixi/service.audio.spotremote</source>
         <license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
         <summary lang="en_GB">Service to automatic start Spotremote addon if Spotify is playing.</summary>
         <summary lang="de_DE">Dienst um Spoteremote automatisch zu starten wenn Spotify spielt.</summary>
