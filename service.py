@@ -55,12 +55,19 @@ def monitor(thread2):
                     xbmc.log('Spotremote_Service - start monitor', level=xbmc.LOGDEBUG)
                 thread2 = RepeatEvery(1, player.monitorChanges)
                 thread2.start()
+        else:
+            if not thread2 == None:
+                thread2.stop()
 
 if __name__ == '__main__':
     thread = None
     thread2 = None
     my_addon = xbmcaddon.Addon()
     DebugLog = my_addon.getSetting('debug')
+    if DebugLog == "true":
+        DebugLog = True
+    else:
+        DebugLog = False
     player = spotifyplayer.SpotifyPlayer()
     thread = RepeatEvery(1, monitor, thread2)
     thread.start()

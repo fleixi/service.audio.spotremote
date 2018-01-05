@@ -13,9 +13,17 @@ class SpotifyPlayer(xbmc.Player):
     def __init__(self):
         super(SpotifyPlayer, self).__init__()
         
-        my_addon = xbmcaddon.Addon()
-        self.DebugLog = my_addon.getSetting('debug')
-        self.SyncPulseaudio = my_addon.getSetting('pulseaudio')
+        self.my_addon = xbmcaddon.Addon()
+        self.DebugLog = self.my_addon.getSetting('debug')
+        if self.DebugLog == "true":
+            self.DebugLog = True
+        else:
+            self.DebugLog = False
+        self.SyncPulseaudio = self.my_addon.getSetting('pulseaudio')
+        if self.SyncPulseaudio == "true":
+            self.SyncPulseaudio = True
+        else:
+            self.SyncPulseaudio = False
         
         if self.DebugLog:
             xbmc.log('Spotremote_Player - init', level=xbmc.LOGDEBUG)
@@ -32,37 +40,56 @@ class SpotifyPlayer(xbmc.Player):
         self.monitor_enalbed = True
         self.Pause = False
         self.Next = False
+        self.Spotify_Player = True
         self.title = "Spotremote - init title"
         self.title_old = "Spotremote - init title_old"
         self.spotify = None
         self.properties_manager = None
         self.stopflag = True
+        self.NextTitle = False
+        self.dummy_video = None
         
     def getStopFlag(self):
         return self.stopflag
         
     def onPlayBackStarted(self):
-        if self.DebugLog:
-            xbmc.log('Spotremote_Player - PlayBackStarted', level=xbmc.LOGDEBUG)
-        self.Pause = False
-        try:
-            status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
-        except:
-            self.stopAll()
-        if status == "Paused" :
-            self.spotify.Play()
+        if self.NextTitle == False and not self.dummy_video == None:
+            if self.DebugLog:
+                xbmc.log('Spotremote_Player - PlayBackStarted', level=xbmc.LOGDEBUG)
+            self.monitor_enalbed = False
+            self.Spotify_Player = True
+            self.Pause = False
+            #xbmc.sleep(1000)
+            status = xbmc.getInfoLabel('Player.Filenameandpath') 
+            #xbmc.log('Spotremote_Player - PlayBackStarted Status: ' + status, level=xbmc.LOGNOTICE)
+            #xbmc.log('Spotremote_Player - PlayBackStarted VideoUrl: ' + self.dummy_video, level=xbmc.LOGNOTICE)
+            if not status.strip() == "" or not status == False:
+                #xbmc.log('Spotremote_Player - PlayBackStarted Spotify_Player: ' , level=xbmc.LOGNOTICE)
+                self.Spotify_Player = False
+            if self.checkPlayStatus():
+                #xbmc.log('Spotremote_Player - PlayBackStarted Spotify_Player: match' , level=xbmc.LOGNOTICE)
+                self.Spotify_Player = True
+                self.monitor_enalbed = True
+                try:
+                    status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
+                except:
+                    self.stopAll()
+                if status == "Paused" :
+                    self.spotify.Play()
+        self.NextTitle = False
     
     def onPlayBackPaused(self):
-        if self.DebugLog:
-            xbmc.log('Spotremote_Player - PlayBackPaused', level=xbmc.LOGDEBUG)
-        self.monitor_enalbed = True
-        self.Pause = True
-        try:
-            status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
-        except:
-            self.stopAll()
-        if status == "Playing" :
-            self.spotify.Pause()
+        if self.checkPlayStatus():
+            if self.DebugLog:
+                xbmc.log('Spotremote_Player - PlayBackPaused', level=xbmc.LOGDEBUG)
+            self.monitor_enalbed = True
+            self.Pause = True
+            try:
+                status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
+            except:
+                self.stopAll()
+            if status == "Playing" :
+                self.spotify.Pause()
             
     def onPlayBackResumed(self):
         if self.DebugLog:
@@ -75,43 +102,47 @@ class SpotifyPlayer(xbmc.Player):
         self.onPlayBackFinished()
 
     def onPlayBackFinished(self):
-        if self.DebugLog:
-            xbmc.log('Spotremote_Player - PlayBackFinished', level=xbmc.LOGDEBUG)
-        self.monitor_enalbed = True
-        self.Pause = True
-        try:
-            status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
-        except:
-            self.stopAll()
-        if status == 'Playing':
-            self.spotify.Pause()
+        if self.checkPlayStatus():
+            if self.DebugLog:
+                xbmc.log('Spotremote_Player - PlayBackFinished', level=xbmc.LOGDEBUG)
+            self.monitor_enalbed = True
+            #self.Spotify_Player = True
+            self.Pause = True
+            try:
+                status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
+            except:
+                status = ""
+                self.stopAll()
+            if status == 'Playing':
+                self.spotify.Pause()
             
     def onPlayBackStopped(self):
-        if self.DebugLog:
-            xbmc.log('Spotremote_Player - PlayBackStopped', level=xbmc.LOGDEBUG)
-        self.monitor_enalbed = False
-        xbmc.sleep(1000)
-        if self.isPlaying():
+        if self.checkPlayStatus():
             if self.DebugLog:
-                xbmc.log('Spotremote_Player - PlayBackNext', level=xbmc.LOGDEBUG)
-            self.Next = True
-            self.monitor_enalbed = True
-        else:
-            self.onPlayBackFinished()
+                xbmc.log('Spotremote_Player - PlayBackStopped', level=xbmc.LOGDEBUG)
+            self.monitor_enalbed = False
+            xbmc.sleep(1000)
+            if self.isPlaying() and self.Spotify_Player == True:
+                if self.DebugLog:
+                    xbmc.log('Spotremote_Player - PlayBackNext', level=xbmc.LOGDEBUG)
+                self.Next = True
+                self.monitor_enalbed = True
+            else:
+                self.onPlayBackFinished()
             
     def generateMetadata(self):
         try:
             self.metadata = self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'Metadata')
         except:
             self.stopAll()
-        self.title = self.metadata['xesam:title']
+        self.title = self.metadata['xesam:title'].encode('utf-8')
         self.album = self.metadata['xesam:album']
         self.artist = self.metadata['xesam:artist']
         self.duration = self.metadata['mpris:length'] / 1000000
         self.album_cover = self.metadata['mpris:artUrl']
         
     def generateDummyVideo(self):
-        call(['ffmpeg' , '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t' ,str(self.duration), '-q:a', '0', '-acodec', 'wavpack', self.dummy_video])
+        call(['ffmpeg' , '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t' ,str(self.duration + 10), '-q:a', '0', '-acodec', 'wavpack', self.dummy_video])
     
     def playDummyVideo(self):
         play_item = xbmcgui.ListItem(path=self.dummy_video, iconImage=self.album_cover, thumbnailImage=self.album_cover)
@@ -129,6 +160,7 @@ class SpotifyPlayer(xbmc.Player):
         pl.add(self.dummy_video, play_item)
         pl.add(self.dummy_video, next_item)
         self.play(pl,play_item,False,1)
+        self.seekTime(1) 
     
     def generateDummyVideoPath(self):
         my_addon = xbmcaddon.Addon('service.audio.spotremote')
@@ -138,6 +170,13 @@ class SpotifyPlayer(xbmc.Player):
     def removeDummyVideo(self):
         self.generateDummyVideo()
         os.remove(self.dummy_video)
+        
+    def checkPlayStatus(self):
+        status = xbmc.getInfoLabel('Player.Filenameandpath') 
+        if status == self.dummy_video:
+            return True
+        else:
+            return False
     
     def controlVolume(self):
         if self.SyncPulseaudio:
@@ -194,8 +233,9 @@ class SpotifyPlayer(xbmc.Player):
         self.stopflag = False
         try:
             sys.exit(0)
-        except SystemExit as e:
-             os._exit(0)
+        except:
+            if self.DebugLog:
+                xbmc.log('Spotremote_Player - Stop All = False', level=xbmc.LOGDEBUG)
 
 
     def getDBus(self):
@@ -214,10 +254,17 @@ class SpotifyPlayer(xbmc.Player):
         if running == None or running == "":
             self.stopAll()
         if self.monitor_enalbed and not xbmc.abortRequested:
+            xbmc.log('Spotremote_Player - Monitor Ping' , level=xbmc.LOGNOTICE)
+            self.SyncPulseaudio = self.my_addon.getSetting('pulseaudio')
             xbmcgui.Window(10000).setProperty('Spotremote_Monitor', 'Running')
             status = ""
             if self.isPlaying() and not xbmc.abortRequested and self.monitor_enalbed:
-                status = self.getMusicInfoTag().getTitle()
+                try:
+                    status = self.getMusicInfoTag().getTitle()
+                except:
+                    status = ""
+                #if status == 'Previous' or status == 'Next' or status == 'Spotify':
+                #    self.SyncPulseaudio == False
                 if status == 'Previous' and self.Next and not xbmc.abortRequested and self.monitor_enalbed:
                     if self.DebugLog:
                         xbmc.log('Spotremote_Player - Monitor Previous', level=xbmc.LOGDEBUG)
@@ -235,14 +282,18 @@ class SpotifyPlayer(xbmc.Player):
                     self.generateAndRun()
                 
                 self.Next = False
-                self.title_old = status
+                self.title_old = status.encode('utf-8')
                 self.generateMetadata()
-            
-            if not self.title == self.title_old and not xbmc.abortRequested and self.monitor_enalbed:
+            try:
+                status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
+            except:
+                status = "Stopped"
+            if not self.title == self.title_old and status == "Playing" and not xbmc.abortRequested and self.monitor_enalbed and self.Spotify_Player == True:
                     if self.DebugLog:
                         xbmc.log('Spotremote_Player - Monitor Title Cache', level=xbmc.LOGDEBUG)
-                        xbmc.log('Spotremote_Player Title: old: ' + self.title_old, level=xbmc.LOGDEBUG)
-                        xbmc.log('Spotremote_Player Title: new: ' + self.title, level=xbmc.LOGDEBUG)
+                        xbmc.log('Spotremote_Player Title: old: ' + self.title_old.encode('utf-8'), level=xbmc.LOGDEBUG)
+                        xbmc.log('Spotremote_Player Title: new: ' + self.title.encode('utf-8'), level=xbmc.LOGDEBUG)
+                    self.NextTitle = True
                     if self.title == "Spotremote - init title":
                         self.generateMetadata()
                     self.title_old = self.title
@@ -250,10 +301,7 @@ class SpotifyPlayer(xbmc.Player):
                     self.generateDummyVideo()
                     self.playDummyVideo()
                 
-            try:
-                status = str(self.properties_manager.Get('org.mpris.MediaPlayer2.Player', 'PlaybackStatus'))
-            except:
-                status = "Stopped"
+            
             if not self.Pause and status == "Paused" and not xbmc.abortRequested and self.monitor_enalbed:
                 if self.DebugLog:
                     xbmc.log('Spotremote_Player - Monitor Paused', level=xbmc.LOGDEBUG)
